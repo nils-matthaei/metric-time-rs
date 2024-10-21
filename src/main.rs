@@ -12,6 +12,7 @@ fn main() {
     let mut tz_offset: i32 = 0;
     let mut skip_next: bool = false;
     let mut oneshot: bool = false;
+    let mut include_seconds: bool = true;
     for i in 1..args.len() {
         if skip_next {
             skip_next = false;
@@ -30,6 +31,9 @@ fn main() {
             "--oneshot" => {
                 oneshot = true;
             }
+            "--no-seconds" => {
+                include_seconds = false;
+            }
             _ => {
                 eprintln!("Unkown argument: {}", args[i]);
             }
@@ -38,9 +42,9 @@ fn main() {
 
     let mut decimal_now = DecimalTime::now(tz_offset);
     if oneshot {
-        println!("{}", decimal_now.to_string());
+        println!("{}", decimal_now.to_string(&include_seconds));
     } else {
-        decimal_now.print_loop();
+        decimal_now.print_loop(&include_seconds);
     }
 }
 
@@ -99,11 +103,15 @@ impl DecimalTime {
         };
     }
 
-    fn to_string(&self) -> String {
-        return format!(
-            "{:0>2}:{:0>2}:{:0>2}",
-            self.dec_hour, self.dec_min, self.dec_sec
-        );
+    fn to_string(&self, include_seconds: &bool) -> String {
+        if *include_seconds {
+            return format!(
+                "{:0>2}:{:0>2}:{:0>2}",
+                self.dec_hour, self.dec_min, self.dec_sec
+            );
+        } else {
+            return format!("{:0>2}:{:0>2}", self.dec_hour, self.dec_min);
+        }
     }
 
     fn increment(&mut self) {
@@ -126,10 +134,10 @@ impl DecimalTime {
         self.dec_hour %= 10;
     }
 
-    fn print_loop(&mut self) {
+    fn print_loop(&mut self, include_seconds: &bool) {
         let delay = time::Duration::from_millis(864); // 1 decimal second == 864 milliseconds
         loop {
-            print!("\r{}", self.to_string());
+            print!("\r{}", self.to_string(include_seconds));
             std::io::stdout().flush().unwrap();
             self.increment();
             thread::sleep(delay);
