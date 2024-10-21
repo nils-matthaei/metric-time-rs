@@ -11,6 +11,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let mut tz_offset: i32 = 0;
     let mut skip_next: bool = false;
+    let mut oneshot: bool = false;
     for i in 1..args.len() {
         if skip_next {
             skip_next = false;
@@ -26,6 +27,9 @@ fn main() {
                     process::exit(1);
                 }
             }
+            "--oneshot" => {
+                oneshot = true;
+            }
             _ => {
                 eprintln!("Unkown argument: {}", args[i]);
             }
@@ -33,7 +37,11 @@ fn main() {
     }
 
     let mut decimal_now = DecimalTime::now(tz_offset);
-    decimal_now.print_loop();
+    if oneshot {
+        println!("{}", decimal_now.to_string());
+    } else {
+        decimal_now.print_loop();
+    }
 }
 
 fn parse_timezone(tz_arg: &String) -> i32 {
